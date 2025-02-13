@@ -1,92 +1,99 @@
-#include <iostream>//Handles input/output 
-#include <fstream>//Reads and writes files
-#include <vector>//easy storage
-#include <string>//Handles text processing
-#include <sstream>//Processes CSV files with string stream
-#include <stdexcept>//Handles errors and exceptions
+#include <iostream> // Handles input/output
+#include <fstream>  // Reads and writes files
+#include <vector>   // Easy storage
+#include <string>   // Handles text processing
+#include <sstream>  // Processes CSV files with string stream
+#include <stdexcept> // Handles errors and exceptions
 
 using namespace std;
 
 int generateMemberID() {
-    static int idCounter = 1000;//static variable that retains its value between function calls
-    return ++idCounter;//Increments and returns the next unique ID
-
+    static int idCounter = 1000; // Static variable that retains its value between function calls
+    return ++idCounter;          // Increments and returns the next unique ID
 }
-//abstract class that will be used by books and members
+
+// Abstract class that will be used by books and members
 class LibraryEntity {
 public:
     virtual void addEntity() = 0;
     virtual void displayDetails() = 0;
 };
-//manages books
+
+// Manages books
 class Book : public LibraryEntity {
 public:
     string title, author, isbn;
     int year, stock;
-//consructor to initialize book attributes
+
+    // Constructor to initialize book attributes
     Book(string t, string a, string i, int y, int s) : title(t), author(a), isbn(i), year(y), stock(s) {}
-//it is responsible for adding book details to a file books.csv
+
+    // It is responsible for adding book details to a file books.csv
     void addEntity() override {
-        ofstream file("books.csv", ios::app);//write to a file books in append mode
-        //check if the file has successfully opened
+        ofstream file("books.csv", ios::app); // Write to a file books in append mode
         if (file.is_open()) {
-            //write book details to books file
+            // Write book details to books file
             file << title << "," << author << "," << isbn << "," << year << "," << stock << "\n";
             file.close();
         } else {
-            //handles file operation errors
+            // Handles file operation errors
             cerr << "Error opening books.csv for writing.\n";
         }
     }
-//Displays book details on the console in a formatted manner
+
+    // Displays book details on the console in a formatted manner
     void displayDetails() override {
         cout << "Title: " << title << " | Author: " << author << " | ISBN: " << isbn
              << " | Year: " << year << " | Stock: " << stock << endl;
     }
 };
-//A base class representing a person in the library system 
+
+// A base class representing a person in the library system
 class Person {
 public:
     string name, id, contact;
-//Constructor to initialize a Person object
+
+    // Constructor to initialize a Person object
     Person(string n, string i, string c) : name(n), id(i), contact(c) {}
 };
-//inherited class from Person and Library entity
+
+// Inherited class from Person and LibraryEntity
 class Member : public Person, public LibraryEntity {
 public:
     string password;
     vector<string> borrowedBooks;
-//costructor to initialize Member attributes
+
+    // Constructor to initialize Member attributes
     Member(string n, string c, string p) : Person(n, to_string(generateMemberID()), c), password(p) {}
-// void function to create member.csv file
+
+    // Void function to create member.csv file
     void addEntity() override {
-        ofstream file("members.csv", ios::app);// ensures new members are appended
-         //check if the file has successfully opened
+        ofstream file("members.csv", ios::app); // Ensures new members are appended
         if (file.is_open()) {
-            //write member details to member file
+            // Write member details to member file
             file << name << "," << id << "," << contact << "," << password << "\n";
             file.close();
         } else {
-            // handles errors
+            // Handles errors
             cerr << "Error opening members.csv for writing.\n";
         }
     }
-//Displays member information in a readable format
+
+    // Displays member information in a readable format
     void displayDetails() override {
         cout << "Member: " << name << " | ID: " << id << " | Contact: " << contact << endl;
     }
-//Opens members.csv for reading to verify login credentials
+
+    // Opens members.csv for reading to verify login credentials
     static bool authenticate(string memberID, string password) {
         ifstream file("members.csv");
-        //Reads the file line by line to check each record
         string line, n, i, c, p;
-        while (getline(file, line)) {// Read a single line from the file
-            stringstream ss(line);     // Convert line into a stream
-            getline(ss, n, ',');//extract name
-            getline(ss, i, ',');//extracts id
-            getline(ss, c, ',');//contact
-            getline(ss, p, ',');//password
-            //check if password match
+        while (getline(file, line)) {
+            stringstream ss(line);
+            getline(ss, n, ',');
+            getline(ss, i, ',');
+            getline(ss, c, ',');
+            getline(ss, p, ',');
             if (i == memberID && p == password) {
                 file.close();
                 return true;
@@ -208,11 +215,40 @@ public:
             }
         }
     }
+
+    void viewAllAvailableBooks() {
+        ifstream file("books.csv");
+        string line, t, a, i;
+        int y, s;
+        bool found = false;
+
+        cout << "Available Books:\n";
+        while (getline(file, line)) {
+            stringstream ss(line);
+            getline(ss, t, ',');
+            getline(ss, a, ',');
+            getline(ss, i, ',');
+            ss >> y;
+            ss.ignore();
+            ss >> s;
+            if (s > 0) {
+                found = true;
+                cout << "Title: " << t << " | Author: " << a << " | ISBN: " << i
+                     << " | Year: " << y << " | Stock: " << s << endl;
+            }
+        }
+        file.close();
+
+        if (!found) {
+            cout << "No books available in the library.\n";
+        }
+    }
 };
 
 class Librarian : public Person {
 public:
     string password;
+
     Librarian(string n, string i, string c, string p) : Person(n, i, c), password(p) {}
 
     void addBook() {
@@ -319,7 +355,7 @@ void memberActions(string memberID) {
     Member member("", "", "");
     int choice;
     while (true) {
-        cout << "\nMember Menu:\n1. Borrow Book\n2. Return Book\n3. Search Book\n4. View Borrowed Books\n5. Logout\nEnter choice: ";
+        cout << "\nMember Menu:\n1. Borrow Book\n2. Return Book\n3. Search Book\n4. View Borrowed Books\n5. View All Available Books\n6. Logout\nEnter choice: ";
         cin >> choice;
         cin.ignore();
         switch (choice) {
@@ -348,6 +384,9 @@ void memberActions(string memberID) {
                 member.viewBorrowedBooks();
                 break;
             case 5:
+                member.viewAllAvailableBooks();
+                break;
+            case 6:
                 cout << "Logging out...\n";
                 return;
             default:
