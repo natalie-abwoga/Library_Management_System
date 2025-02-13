@@ -1,9 +1,9 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
+#include <iostream>//used for input and output (I/O) operations
+#include <fstream>//provides classes like std::ifstream (input file stream) for reading from files and std::ofstream (output file stream) for writing to files
+#include <vector>//allows easy storage 
+#include <string>//used for handling strings in C++
 #include <sstream>
-#include <stdexcept>
+#include <stdexcept>// exception classes for error handling
 using namespace std;
 
 int generateMemberID() {
