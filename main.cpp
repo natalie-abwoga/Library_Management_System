@@ -217,7 +217,5 @@ void signIn() {
     }
 }
 
-int main() {
-    signIn();
-    return 0;
+
 }
