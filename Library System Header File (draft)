@@ -1,0 +1,57 @@
+#ifndef LIBRARYSYSTEM_H
+#define LIBRARYSYSTEM_H
+
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Book class
+class Book {
+private:
+    string title;
+    string author;
+    string ISBN;
+    bool available;
+
+public:
+    Book(string t, string a, string i) : title(t), author(a), ISBN(i), available(true) {}
+
+    string getTitle() const { return title; }
+    string getAuthor() const { return author; }
+    string getISBN() const { return ISBN; }
+    bool isAvailable() const { return available; }
+
+    void setAvailability(bool status) { available = status; }
+};
+
+// Member class
+class Member {
+private:
+    string name;
+    string memberID;
+    string contact;
+
+public:
+    Member(string n, string id, string c) : name(n), memberID(id), contact(c) {}
+
+    string getName() const { return name; }
+    string getID() const { return memberID; }
+    string getContact() const { return contact; }
+};
+
+// LibrarySystem class
+class LibrarySystem {
+private:
+    vector<Book> books;
+    vector<Member> members;
+
+public:
+    void addBook(const Book& book);
+    void viewBooks() const;
+    void addMember(const Member& member);
+    void viewMembers() const;
+    void borrowBook(const string& bookTitle);
+    void returnBook(const string& bookTitle);
+};
+
+#endif
