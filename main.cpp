@@ -208,7 +208,36 @@ public:
             }
         }
     }
+void viewAllAvailableBooks() {
+        ifstream file("books.csv");
+        string line, t, a, i;
+        int y, s;
+        bool found = false;
+
+        cout << "Available Books:\n";
+        while (getline(file, line)) {
+            stringstream ss(line);
+            getline(ss, t, ',');
+            getline(ss, a, ',');
+            getline(ss, i, ',');
+            ss >> y;
+            ss.ignore();
+            ss >> s;
+            if (s > 0) {
+                found = true;
+                cout << "Title: " << t << " | Author: " << a << " | ISBN: " << i
+                     << " | Year: " << y << " | Stock: " << s << endl;
+            }
+        }
+        file.close();
+
+        if (!found) {
+            cout << "No books available in the library.\n";
+        }
+}
 };
+
+
 
 class Librarian : public Person {
 public:
@@ -319,10 +348,10 @@ void memberActions(string memberID) {
     Member member("", "", "");
     int choice;
     while (true) {
-        cout << "\nMember Menu:\n1. Borrow Book\n2. Return Book\n3. Search Book\n4. View Borrowed Books\n5. Logout\nEnter choice: ";
+        cout << "\nMember Menu:\n1. Borrow Book\n2. Return Book\n3. Search Book\n4. View Borrowed Books\n5. View All Available Books\n6. Logout\nEnter choice: ";
         cin >> choice;
         cin.ignore();
-        switch (choice) {
+         switch (choice) {
             case 1: {
                 string bookTitle;
                 cout << "Enter the title of the book you want to borrow: ";
@@ -348,11 +377,14 @@ void memberActions(string memberID) {
                 member.viewBorrowedBooks();
                 break;
             case 5:
+                member.viewAllAvailableBooks();
+                break;
+            case 6:
                 cout << "Logging out...\n";
                 return;
             default:
                 cout << "Invalid choice. Try again.\n";
-        }
+         }
     }
 }
 
