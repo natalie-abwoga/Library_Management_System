@@ -51,37 +51,42 @@ public:
 //Constructor to initialize a Person object
     Person(string n, string i, string c) : name(n), id(i), contact(c) {}
 };
-
+//inherited class from Person and Library entity
 class Member : public Person, public LibraryEntity {
 public:
     string password;
     vector<string> borrowedBooks;
-
+//costructor to initialize Member attributes
     Member(string n, string c, string p) : Person(n, to_string(generateMemberID()), c), password(p) {}
-
+// void function to create member.csv file
     void addEntity() override {
-        ofstream file("members.csv", ios::app);
+        ofstream file("members.csv", ios::app);// ensures new members are appended
+         //check if the file has successfully opened
         if (file.is_open()) {
+            //write member details to member file
             file << name << "," << id << "," << contact << "," << password << "\n";
             file.close();
         } else {
+            // handles errors
             cerr << "Error opening members.csv for writing.\n";
         }
     }
-
+//Displays member information in a readable format
     void displayDetails() override {
         cout << "Member: " << name << " | ID: " << id << " | Contact: " << contact << endl;
     }
-
+//Opens members.csv for reading to verify login credentials
     static bool authenticate(string memberID, string password) {
         ifstream file("members.csv");
+        //Reads the file line by line to check each record
         string line, n, i, c, p;
         while (getline(file, line)) {
             stringstream ss(line);
-            getline(ss, n, ',');
-            getline(ss, i, ',');
-            getline(ss, c, ',');
-            getline(ss, p, ',');
+            getline(ss, n, ',');//extract name
+            getline(ss, i, ',');//extracts id
+            getline(ss, c, ',');//contact
+            getline(ss, p, ',');//password
+            //check if password match
             if (i == memberID && p == password) {
                 file.close();
                 return true;
