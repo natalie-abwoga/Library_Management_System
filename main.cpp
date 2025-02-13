@@ -80,8 +80,8 @@ public:
         ifstream file("members.csv");
         //Reads the file line by line to check each record
         string line, n, i, c, p;
-        while (getline(file, line)) {
-            stringstream ss(line);
+        while (getline(file, line)) {// Read a single line from the file
+            stringstream ss(line);     // Convert line into a stream
             getline(ss, n, ',');//extract name
             getline(ss, i, ',');//extracts id
             getline(ss, c, ',');//contact
