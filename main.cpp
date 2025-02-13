@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream>//allow input and output
 #include <fstream>
 #include <vector>
 #include <string>
@@ -19,14 +19,14 @@ public:
 };
 
 // Book Class
-class Book : public LibraryEntity {
+class Book : public LibraryEntity {//inheritance
 public:
     string title, author, isbn;
     int year;
     bool isAvailable;
 
     Book(string t, string a, string i, int y, bool avail = true)
-        : title(t), author(a), isbn(i), year(y), isAvailable(avail) {}
+        : title(t), author(a), isbn(i), year(y), isAvailable(avail) {}//constructors
 
     void addEntity() override {
         ofstream file("books.csv", ios::app);
