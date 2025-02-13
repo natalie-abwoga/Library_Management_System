@@ -111,6 +111,38 @@ public:
     }
 };
 
+// For the user to search for books
+void searchBooks() {
+    string searchForBooks;
+    cout << "Enter title or author to search for: ";
+    cin.ignore();  // to clear the input buffer
+    getline(cin, searchForBooks);
+
+    ifstream file("books.csv");
+    string line, title, author, isbn, year, stock;
+    bool found = false;
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        getline(ss, title, ',');
+        getline(ss, author, ',');
+        getline(ss, isbn, ',');
+        getline(ss, year, ',');
+        getline(ss, stock, ',');
+
+        // Check if search query matches the title or author
+        if (title.find(searchForBooks) != string::npos || author.find(searchForBooks) != string::npos) {
+            cout << "Found: " << title << " by " << author << " | ISBN: " << isbn << " | Year: " << year << " | Stock: " << stock << endl;
+            found = true;
+        }
+    }
+    file.close();
+
+    if (!found) {
+        cout << "No books found matching the search criteria.\n";
+    }
+}
+
 // Function for librarian actions
 void librarianActions() {
     int choice;
@@ -144,6 +176,10 @@ void librarianActions() {
             cout << "Member added successfully! Library ID: " << newMember.id << "\n";
             break;
         }
+        case 4: {
+        searchBooks();
+         break;
+          }
         case 3:
             cout << "Logging out...\n";
             return;
