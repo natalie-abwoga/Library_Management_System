@@ -1,36 +1,38 @@
-#include <iostream>//used for input and output (I/O) operations
-#include <fstream>//provides classes like std::ifstream (input file stream) for reading from files and std::ofstream (output file stream) for writing to files
-#include <vector>//allows easy storage 
-#include <string>//used for handling strings in C++
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
 #include <sstream>
-#include <stdexcept>// exception classes for error handling
+#include <stdexcept>
+
 using namespace std;
 
 int generateMemberID() {
     static int idCounter = 1000;
-    return idCounter++;
+    return ++idCounter;
 }
 
-// Abstract class enforcing common methods
 class LibraryEntity {
 public:
     virtual void addEntity() = 0;
     virtual void displayDetails() = 0;
 };
 
-// Book Class
 class Book : public LibraryEntity {
 public:
     string title, author, isbn;
     int year, stock;
 
-    Book(string t, string a, string i, int y, int s)
-        : title(t), author(a), isbn(i), year(y), stock(s) {}
+    Book(string t, string a, string i, int y, int s) : title(t), author(a), isbn(i), year(y), stock(s) {}
 
     void addEntity() override {
         ofstream file("books.csv", ios::app);
-        file << title << "," << author << "," << isbn << "," << year << "," << stock << "\n";
-        file.close();
+        if (file.is_open()) {
+            file << title << "," << author << "," << isbn << "," << year << "," << stock << "\n";
+            file.close();
+        } else {
+            cerr << "Error opening books.csv for writing.\n";
+        }
     }
 
     void displayDetails() override {
@@ -39,14 +41,12 @@ public:
     }
 };
 
-// Base Person Class
 class Person {
 public:
     string name, id, contact;
     Person(string n, string i, string c) : name(n), id(i), contact(c) {}
 };
 
-// Member Class
 class Member : public Person, public LibraryEntity {
 public:
     string password;
@@ -56,8 +56,12 @@ public:
 
     void addEntity() override {
         ofstream file("members.csv", ios::app);
-        file << name << "," << id << "," << contact << "," << password << "\n";
-        file.close();
+        if (file.is_open()) {
+            file << name << "," << id << "," << contact << "," << password << "\n";
+            file.close();
+        } else {
+            cerr << "Error opening members.csv for writing.\n";
+        }
     }
 
     void displayDetails() override {
@@ -81,16 +85,149 @@ public:
         file.close();
         return false;
     }
+
+    void borrowBook(string bookTitle) {
+        ifstream file("books.csv");
+        vector<Book> books;
+        string line, t, a, i;
+        int y, s;
+        bool found = false;
+
+        while (getline(file, line)) {
+            stringstream ss(line);
+            getline(ss, t, ',');
+            getline(ss, a, ',');
+            getline(ss, i, ',');
+            ss >> y;
+            ss.ignore();
+            ss >> s;
+            if (t == bookTitle && s > 0) {
+                found = true;
+                books.emplace_back(t, a, i, y, s - 1);
+                borrowedBooks.push_back(t);
+            } else {
+                books.emplace_back(t, a, i, y, s);
+            }
+        }
+        file.close();
+
+        if (found) {
+            ofstream outFile("books.csv");
+            for (auto &book : books) {
+                outFile << book.title << "," << book.author << "," << book.isbn << "," << book.year << "," << book.stock << "\n";
+            }
+            outFile.close();
+            cout << "Book borrowed successfully. You have 2 weeks to return it.\n";
+        } else {
+            cout << "Book not available or out of stock.\n";
+        }
+    }
+
+    void returnBook(string bookTitle) {
+        ifstream file("books.csv");
+        vector<Book> books;
+        string line, t, a, i;
+        int y, s;
+        bool found = false;
+
+        while (getline(file, line)) {
+            stringstream ss(line);
+            getline(ss, t, ',');
+            getline(ss, a, ',');
+            getline(ss, i, ',');
+            ss >> y;
+            ss.ignore();
+            ss >> s;
+            if (t == bookTitle) {
+                found = true;
+                books.emplace_back(t, a, i, y, s + 1);
+            } else {
+                books.emplace_back(t, a, i, y, s);
+            }
+        }
+        file.close();
+
+        if (found) {
+            ofstream outFile("books.csv");
+            for (auto &book : books) {
+                outFile << book.title << "," << book.author << "," << book.isbn << "," << book.year << "," << book.stock << "\n";
+            }
+            outFile.close();
+            cout << "Book returned successfully.\n";
+        } else {
+            cout << "Book not found in the library system.\n";
+        }
+    }
+
+    void searchBook(string bookTitle) {
+        ifstream file("books.csv");
+        string line, t, a, i;
+        int y, s;
+        bool found = false;
+
+        while (getline(file, line)) {
+            stringstream ss(line);
+            getline(ss, t, ',');
+            getline(ss, a, ',');
+            getline(ss, i, ',');
+            ss >> y;
+            ss.ignore();
+            ss >> s;
+            if (t == bookTitle) {
+                found = true;
+                cout << "Book found:\n";
+                cout << "Title: " << t << " | Author: " << a << " | ISBN: " << i
+                     << " | Year: " << y << " | Stock: " << s << endl;
+                break;
+            }
+        }
+        file.close();
+
+        if (!found) {
+            cout << "Book not found.\n";
+        }
+    }
+
+    void viewBorrowedBooks() {
+        if (borrowedBooks.empty()) {
+            cout << "You have not borrowed any books.\n";
+        } else {
+            cout << "Books you have borrowed:\n";
+            for (const string &book : borrowedBooks) {
+                cout << "- " << book << endl;
+            }
+        }
+    }
 };
 
-// Librarian Class
 class Librarian : public Person {
 public:
     string password;
     Librarian(string n, string i, string c, string p) : Person(n, i, c), password(p) {}
 
-    void addBook(Book book) { book.addEntity(); }
-    void addMember(Member member) { member.addEntity(); }
+    void addBook() {
+        string title, author, isbn;
+        int year, stock;
+        cout << "Enter book title: "; getline(cin, title);
+        cout << "Enter author: "; getline(cin, author);
+        cout << "Enter ISBN: "; getline(cin, isbn);
+        cout << "Enter publication year: "; cin >> year;
+        cout << "Enter stock quantity: "; cin >> stock;
+        cin.ignore();
+        Book newBook(title, author, isbn, year, stock);
+        newBook.addEntity();
+        cout << "Book added successfully!\n";
+    }
+
+    void addMember() {
+        string name, contact, password;
+        cout << "Enter member name: "; getline(cin, name);
+        cout << "Enter contact: "; getline(cin, contact);
+        cout << "Enter password: "; getline(cin, password);
+        Member newMember(name, contact, password);
+        newMember.addEntity();
+        cout << "Member added successfully! Library ID: " << newMember.id << "\n";
+    }
 
     static bool authenticate(string librarianID, string password) {
         ifstream file("librarians.txt");
@@ -111,90 +248,45 @@ public:
     }
 };
 
-// Function for librarian actions
-void librarianActions() {
-    int choice;
-    while (true) {
-        cout << "\nLibrarian Menu:\n1. Add Book\n2. Add Member\n3. Logout\nEnter your choice: ";
-        cin >> choice;
-        cin.ignore();
+// Forward declarations
+void librarianActions();
+void memberActions(string memberID);
 
-        switch (choice) {
-        case 1: {
-            string title, author, isbn;
-            int year, stock;
-            cout << "Enter Book Title: "; getline(cin, title);
-            cout << "Enter Author: "; getline(cin, author);
-            cout << "Enter ISBN: "; getline(cin, isbn);
-            cout << "Enter Year: "; cin >> year;
-            cout << "Enter Stock: "; cin >> stock;
-            cin.ignore();
-            Book newBook(title, author, isbn, year, stock);
-            newBook.addEntity();
-            cout << "Book added successfully!\n";
-            break;
-        }
-        case 2: {
-            string name, contact, password;
-            cout << "Enter Member Name: "; getline(cin, name);
-            cout << "Enter Contact: "; getline(cin, contact);
-            cout << "Enter Password: "; getline(cin, password);
-            Member newMember(name, contact, password);
-            newMember.addEntity();
-            cout << "Member added successfully! Library ID: " << newMember.id << "\n";
-            break;
-        }
-        case 3:
-            cout << "Logging out...\n";
-            return;
-        default:
-            cout << "Invalid choice! Try again.\n";
-        }
-    }
-}
-
-// Sign In Function
 void signIn() {
     while (true) {
         int choice;
         cout << "Sign in as:\n1. Member\n2. Librarian\nEnter choice: ";
         cin >> choice;
         cin.ignore();
-
         if (choice == 1) {
-            int registered;
-            cout << "Are you registered in the library? (1 for Yes, 0 for No): ";
-            cin >> registered;
+            int memberChoice;
+            cout << "Are you a registered member?\n1. Yes\n2. No\nEnter choice: ";
+            cin >> memberChoice;
             cin.ignore();
-
-            if (registered) {
+            if (memberChoice == 1) {
                 string memberID, password;
-                int attempts = 0;
                 cout << "Enter Library ID Number: ";
                 cin >> memberID;
-
-                while (attempts < 3) {
-                    cout << "Enter Password: ";
-                    cin >> password;
-
-                    if (Member::authenticate(memberID, password)) {
-                        cout << "Login successful!\n";
-                        return;
-                    } else {
-                        attempts++;
-                        cout << "Invalid password. Attempts remaining: " << (3 - attempts) << "\n";
-                    }
+                cout << "Enter Password: ";
+                cin >> password;
+                cin.ignore();
+                if (Member::authenticate(memberID, password)) {
+                    cout << "Login successful!\n";
+                    memberActions(memberID);
+                } else {
+                    cout << "Invalid credentials!\n";
                 }
-                cout << "Too many failed attempts. Please contact the administrator.\n";
-            } else {
-                cout << "Please sign up.\n";
-                string name, contact, newPassword;
-                cout << "Enter Name: "; cin.ignore(); getline(cin, name);
-                cout << "Enter Contact: "; getline(cin, contact);
-                cout << "Enter New Password: "; getline(cin, newPassword);
-                Member newMember(name, contact, newPassword);
+            } else if (memberChoice == 2) {
+                string name, contact, password;
+                cout << "Enter your name: "; getline(cin, name);
+                cout << "Enter your contact: "; getline(cin, contact);
+                cout << "Enter a password: "; getline(cin, password);
+                Member newMember(name, contact, password);
                 newMember.addEntity();
-                cout << "Sign-up successful! Your Library ID Number is: " << newMember.id << endl;
+                cout << "Account created successfully! Your Library ID is: " << newMember.id << "\n";
+                memberActions(newMember.id);
+            } else {
+                cout << "Invalid choice. Try again.\n";
             }
         } else if (choice == 2) {
             string librarianID, password;
@@ -202,13 +294,77 @@ void signIn() {
             cin >> librarianID;
             cout << "Enter Password: ";
             cin >> password;
-
+            cin.ignore();
             if (Librarian::authenticate(librarianID, password)) {
                 cout << "Librarian login successful!\n";
                 librarianActions();
             } else {
                 cout << "Invalid credentials!\n";
             }
+        }
+    }
+}
+
+void memberActions(string memberID) {
+    Member member("", "", "");
+    int choice;
+    while (true) {
+        cout << "\nMember Menu:\n1. Borrow Book\n2. Return Book\n3. Search Book\n4. View Borrowed Books\n5. Logout\nEnter choice: ";
+        cin >> choice;
+        cin.ignore();
+        switch (choice) {
+            case 1: {
+                string bookTitle;
+                cout << "Enter the title of the book you want to borrow: ";
+                getline(cin, bookTitle);
+                member.borrowBook(bookTitle);
+                break;
+            }
+            case 2: {
+                string bookTitle;
+                cout << "Enter the title of the book you want to return: ";
+                getline(cin, bookTitle);
+                member.returnBook(bookTitle);
+                break;
+            }
+            case 3: {
+                string bookTitle;
+                cout << "Enter the title of the book you want to search: ";
+                getline(cin, bookTitle);
+                member.searchBook(bookTitle);
+                break;
+            }
+            case 4:
+                member.viewBorrowedBooks();
+                break;
+            case 5:
+                cout << "Logging out...\n";
+                return;
+            default:
+                cout << "Invalid choice. Try again.\n";
+        }
+    }
+}
+
+void librarianActions() {
+    Librarian librarian("", "", "", "");
+    int choice;
+    while (true) {
+        cout << "\nLibrarian Menu:\n1. Add Book\n2. Add Member\n3. Logout\nEnter choice: ";
+        cin >> choice;
+        cin.ignore();
+        switch (choice) {
+            case 1:
+                librarian.addBook();
+                break;
+            case 2:
+                librarian.addMember();
+                break;
+            case 3:
+                cout << "Logging out...\n";
+                return;
+            default:
+                cout << "Invalid choice. Try again.\n";
         }
     }
 }
