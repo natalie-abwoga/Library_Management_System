@@ -6,7 +6,10 @@
 #include <stdexcept>// exception classes for error handling
 using namespace std;
 
-
+int generateMemberID() {
+    static int idCounter = 1000;
+    return idCounter++;
+}
 
 // Abstract class enforcing common methods
 class LibraryEntity {
