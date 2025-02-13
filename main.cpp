@@ -1,4 +1,4 @@
-#include <iostream>//allow input and output
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -19,24 +19,23 @@ public:
 };
 
 // Book Class
-class Book : public LibraryEntity {//inheritance
+class Book : public LibraryEntity {
 public:
     string title, author, isbn;
-    int year;
-    bool isAvailable;
+    int year, stock;
 
-    Book(string t, string a, string i, int y, bool avail = true)
-        : title(t), author(a), isbn(i), year(y), isAvailable(avail) {}//constructors
+    Book(string t, string a, string i, int y, int s)
+        : title(t), author(a), isbn(i), year(y), stock(s) {}
 
     void addEntity() override {
         ofstream file("books.csv", ios::app);
-        file << title << "," << author << "," << isbn << "," << year << "," << isAvailable << "\n";
+        file << title << "," << author << "," << isbn << "," << year << "," << stock << "\n";
         file.close();
     }
 
     void displayDetails() override {
         cout << "Title: " << title << " | Author: " << author << " | ISBN: " << isbn
-             << " | Year: " << year << " | Available: " << (isAvailable ? "Yes" : "No") << endl;
+             << " | Year: " << year << " | Stock: " << stock << endl;
     }
 };
 
@@ -47,7 +46,7 @@ public:
     Person(string n, string i, string c) : name(n), id(i), contact(c) {}
 };
 
-// Member Class (Inheritance & Aggregation)
+// Member Class
 class Member : public Person, public LibraryEntity {
 public:
     string password;
@@ -123,13 +122,14 @@ void librarianActions() {
         switch (choice) {
         case 1: {
             string title, author, isbn;
-            int year;
+            int year, stock;
             cout << "Enter Book Title: "; getline(cin, title);
             cout << "Enter Author: "; getline(cin, author);
             cout << "Enter ISBN: "; getline(cin, isbn);
             cout << "Enter Year: "; cin >> year;
+            cout << "Enter Stock: "; cin >> stock;
             cin.ignore();
-            Book newBook(title, author, isbn, year);
+            Book newBook(title, author, isbn, year, stock);
             newBook.addEntity();
             cout << "Book added successfully!\n";
             break;
@@ -170,7 +170,6 @@ void signIn() {
             if (registered) {
                 string memberID, password;
                 int attempts = 0;
-                bool success = false;
                 cout << "Enter Library ID Number: ";
                 cin >> memberID;
 
@@ -180,16 +179,13 @@ void signIn() {
 
                     if (Member::authenticate(memberID, password)) {
                         cout << "Login successful!\n";
-                        success = true;
                         return;
                     } else {
                         attempts++;
                         cout << "Invalid password. Attempts remaining: " << (3 - attempts) << "\n";
                     }
                 }
-                if (!success) {
-                    cout << "Too many failed attempts. Please contact the administrator.\n";
-                }
+                cout << "Too many failed attempts. Please contact the administrator.\n";
             } else {
                 cout << "Please sign up.\n";
                 string name, contact, newPassword;
@@ -202,22 +198,22 @@ void signIn() {
             }
         } else if (choice == 2) {
             string librarianID, password;
-            cout << "Enter Librarian ID: "; cin >> librarianID;
-            cout << "Enter Password: "; cin >> password;
+            cout << "Enter Librarian ID: ";
+            cin >> librarianID;
+            cout << "Enter Password: ";
+            cin >> password;
 
             if (Librarian::authenticate(librarianID, password)) {
-                cout << "Login successful!\n";
+                cout << "Librarian login successful!\n";
                 librarianActions();
             } else {
                 cout << "Invalid credentials!\n";
             }
-        } else {
-            cout << "Invalid choice! Try again.\n";
         }
     }
 }
+
 int main() {
     signIn();
     return 0;
-
 }
