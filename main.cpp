@@ -1,49 +1,54 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <stdexcept>
+#include <iostream>//Handles input/output 
+#include <fstream>//Reads and writes files
+#include <vector>//easy storage
+#include <string>//Handles text processing
+#include <sstream>//Processes CSV files with string stream
+#include <stdexcept>//Handles errors and exceptions
 
 using namespace std;
 
 int generateMemberID() {
-    static int idCounter = 1000;
-    return ++idCounter;
-}
+    static int idCounter = 1000;//static variable that retains its value between function calls
+    return ++idCounter;//Increments and returns the next unique ID
 
+}
+//abstract class that will be used by books and members
 class LibraryEntity {
 public:
     virtual void addEntity() = 0;
     virtual void displayDetails() = 0;
 };
-
+//manages books
 class Book : public LibraryEntity {
 public:
     string title, author, isbn;
     int year, stock;
-
+//consructor to initialize book attributes
     Book(string t, string a, string i, int y, int s) : title(t), author(a), isbn(i), year(y), stock(s) {}
-
+//it is responsible for adding book details to a file books.csv
     void addEntity() override {
-        ofstream file("books.csv", ios::app);
+        ofstream file("books.csv", ios::app);//write to a file books in append mode
+        //check if the file has successfully opened
         if (file.is_open()) {
+            //write book details to books file
             file << title << "," << author << "," << isbn << "," << year << "," << stock << "\n";
             file.close();
         } else {
+            //handles file operation errors
             cerr << "Error opening books.csv for writing.\n";
         }
     }
-
+//Displays book details on the console in a formatted manner
     void displayDetails() override {
         cout << "Title: " << title << " | Author: " << author << " | ISBN: " << isbn
              << " | Year: " << year << " | Stock: " << stock << endl;
     }
 };
-
+//A base class representing a person in the library system 
 class Person {
 public:
     string name, id, contact;
+//Constructor to initialize a Person object
     Person(string n, string i, string c) : name(n), id(i), contact(c) {}
 };
 
