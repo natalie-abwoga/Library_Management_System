@@ -1,9 +1,10 @@
-#include <iostream>//used for input and output (I/O) operations
-#include <fstream>//provides classes like std::ifstream (input file stream) for reading from files and std::ofstream (output file stream) for writing to files
-#include <vector>//allows easy storage 
-#include <string>//used for handling strings in C++
-#include <sstream>
-#include <stdexcept>// exception classes for error handling
+#include <iostream>      // used for input and output (I/O) operations
+#include <fstream>       // provides file stream classes for reading/writing files
+#include <vector>        // for using the vector container
+#include <string>        // for using the string class
+#include <sstream>       // for string stream operations
+#include <stdexcept>     // for exception classes
+#include <algorithm>     // for std::find
 using namespace std;
 
 int generateMemberID() {
@@ -34,8 +35,9 @@ public:
     }
 
     void displayDetails() override {
-        cout << "Title: " << title << " | Author: " << author << " | ISBN: " << isbn
-             << " | Year: " << year << " | Stock: " << stock << endl;
+        cout << "Title: " << title << " | Author: " << author
+             << " | ISBN: " << isbn << " | Year: " << year
+             << " | Stock: " << stock << endl;
     }
 };
 
@@ -46,27 +48,32 @@ public:
     Person(string n, string i, string c) : name(n), id(i), contact(c) {}
 };
 
-// Member Class
+// Member Class with fine feature
 class Member : public Person, public LibraryEntity {
 public:
     string password;
     vector<string> borrowedBooks;
+    double fineAmount; // Accumulated fine amount
 
-    Member(string n, string c, string p) : Person(n, to_string(generateMemberID()), c), password(p) {}
+    Member(string n, string c, string p)
+        : Person(n, to_string(generateMemberID()), c), password(p), fineAmount(0) {}
 
     void addEntity() override {
+        // Save member details along with current fine amount
         ofstream file("members.csv", ios::app);
-        file << name << "," << id << "," << contact << "," << password << "\n";
+        file << name << "," << id << "," << contact << "," << password << "," << fineAmount << "\n";
         file.close();
     }
 
     void displayDetails() override {
-        cout << "Member: " << name << " | ID: " << id << " | Contact: " << contact << endl;
+        cout << "Member: " << name << " | ID: " << id
+             << " | Contact: " << contact << " | Fine Due: " << fineAmount << endl;
     }
 
     static bool authenticate(string memberID, string password) {
         ifstream file("members.csv");
         string line, n, i, c, p;
+        // Note: This simple authentication ignores the fine field
         while (getline(file, line)) {
             stringstream ss(line);
             getline(ss, n, ',');
@@ -80,6 +87,54 @@ public:
         }
         file.close();
         return false;
+    }
+
+    // Member borrows a book (simulated by adding to an in-memory vector)
+    void borrowBook(const string &bookTitle) {
+        borrowedBooks.push_back(bookTitle);
+        cout << "Book borrowed: " << bookTitle << endl;
+    }
+
+    // Member returns a book; if returned late, a fine of 500 is applied.
+    void returnBook(const string &bookTitle, bool returnedLate) {
+        auto it = find(borrowedBooks.begin(), borrowedBooks.end(), bookTitle);
+        if(it != borrowedBooks.end()){
+            borrowedBooks.erase(it);
+            cout << "Book returned: " << bookTitle << endl;
+            if(returnedLate){
+                fineAmount += 500;
+                cout << "Book returned late. A fine of 500 has been added." << endl;
+            }
+        } else {
+            cout << "You haven't borrowed the book: " << bookTitle << endl;
+        }
+    }
+
+    // Member reports a lost book; a fine of 500 is applied.
+    void reportLostBook(const string &bookTitle) {
+        auto it = find(borrowedBooks.begin(), borrowedBooks.end(), bookTitle);
+        if(it != borrowedBooks.end()){
+            borrowedBooks.erase(it);
+            fineAmount += 500;
+            cout << "Book reported as lost. A fine of 500 has been added." << endl;
+        } else {
+            cout << "You haven't borrowed the book: " << bookTitle << endl;
+        }
+    }
+
+    // Member can pay the accumulated fine.
+    void payFine() {
+        cout << "Your current fine is: " << fineAmount << "\n";
+        double amount;
+        cout << "Enter amount to pay: ";
+        cin >> amount;
+        if(amount >= fineAmount) {
+            cout << "Fine cleared!" << endl;
+            fineAmount = 0;
+        } else {
+            fineAmount -= amount;
+            cout << "Remaining fine: " << fineAmount << endl;
+        }
     }
 };
 
@@ -115,14 +170,14 @@ public:
 void searchBooks() {
     string searchForBooks;
     cout << "Enter title or author to search for: ";
-    cin.ignore();  // to clear the input buffer
+    cin.ignore();  // Clear input buffer
     getline(cin, searchForBooks);
 
     ifstream file("books.csv");
     string line, title, author, isbn, year, stock;
     bool found = false;
 
-    while (getline(file, line)) {
+    while(getline(file, line)) {
         stringstream ss(line);
         getline(ss, title, ',');
         getline(ss, author, ',');
@@ -130,61 +185,123 @@ void searchBooks() {
         getline(ss, year, ',');
         getline(ss, stock, ',');
 
-        // Check if search query matches the title or author
-        if (title.find(searchForBooks) != string::npos || author.find(searchForBooks) != string::npos) {
-            cout << "Found: " << title << " by " << author << " | ISBN: " << isbn << " | Year: " << year << " | Stock: " << stock << endl;
+        if(title.find(searchForBooks) != string::npos || author.find(searchForBooks) != string::npos) {
+            cout << "Found: " << title << " by " << author
+                 << " | ISBN: " << isbn << " | Year: " << year
+                 << " | Stock: " << stock << endl;
             found = true;
         }
     }
     file.close();
 
-    if (!found) {
-        cout << "No books found matching the search criteria.\n";
+    if(!found) {
+        cout << "No books found matching the search criteria." << endl;
     }
+}
+
+// Member action menu for borrowing, returning, lost-book reporting, and paying fines.
+void memberActions(Member &member) {
+    int choice;
+    do {
+        cout << "\nMember Menu:\n"
+             << "1. Search Books\n"
+             << "2. Borrow Book\n"
+             << "3. Return Book\n"
+             << "4. Report Lost Book\n"
+             << "5. Pay Fine\n"
+             << "6. Logout\n"
+             << "Enter your choice: ";
+        cin >> choice;
+        cin.ignore();
+
+        switch(choice) {
+            case 1:
+                searchBooks();
+                break;
+            case 2: {
+                string bookTitle;
+                cout << "Enter book title to borrow: ";
+                getline(cin, bookTitle);
+                member.borrowBook(bookTitle);
+                break;
+            }
+            case 3: {
+                string bookTitle;
+                char late;
+                cout << "Enter book title to return: ";
+                getline(cin, bookTitle);
+                cout << "Was the book returned late? (y/n): ";
+                cin >> late;
+                cin.ignore();
+                bool isLate = (late == 'y' || late == 'Y');
+                member.returnBook(bookTitle, isLate);
+                break;
+            }
+            case 4: {
+                string bookTitle;
+                cout << "Enter book title to report lost: ";
+                getline(cin, bookTitle);
+                member.reportLostBook(bookTitle);
+                break;
+            }
+            case 5:
+                member.payFine();
+                break;
+            case 6:
+                cout << "Logging out...\n";
+                break;
+            default:
+                cout << "Invalid choice! Try again." << endl;
+        }
+    } while(choice != 6);
 }
 
 // Function for librarian actions
 void librarianActions() {
     int choice;
     while (true) {
-        cout << "\nLibrarian Menu:\n1. Add Book\n2. Add Member\n3. Logout\nEnter your choice: ";
+        cout << "\nLibrarian Menu:\n"
+             << "1. Add Book\n"
+             << "2. Add Member\n"
+             << "3. Search Books\n"
+             << "4. Logout\n"
+             << "Enter your choice: ";
         cin >> choice;
         cin.ignore();
 
         switch (choice) {
-        case 1: {
-            string title, author, isbn;
-            int year, stock;
-            cout << "Enter Book Title: "; getline(cin, title);
-            cout << "Enter Author: "; getline(cin, author);
-            cout << "Enter ISBN: "; getline(cin, isbn);
-            cout << "Enter Year: "; cin >> year;
-            cout << "Enter Stock: "; cin >> stock;
-            cin.ignore();
-            Book newBook(title, author, isbn, year, stock);
-            newBook.addEntity();
-            cout << "Book added successfully!\n";
-            break;
-        }
-        case 2: {
-            string name, contact, password;
-            cout << "Enter Member Name: "; getline(cin, name);
-            cout << "Enter Contact: "; getline(cin, contact);
-            cout << "Enter Password: "; getline(cin, password);
-            Member newMember(name, contact, password);
-            newMember.addEntity();
-            cout << "Member added successfully! Library ID: " << newMember.id << "\n";
-            break;
-        }
-        case 4: {
-        searchBooks();
-         break;
-          }
-        case 3:
-            cout << "Logging out...\n";
-            return;
-        default:
-            cout << "Invalid choice! Try again.\n";
+            case 1: {
+                string title, author, isbn;
+                int year, stock;
+                cout << "Enter Book Title: "; getline(cin, title);
+                cout << "Enter Author: "; getline(cin, author);
+                cout << "Enter ISBN: "; getline(cin, isbn);
+                cout << "Enter Year: "; cin >> year;
+                cout << "Enter Stock: "; cin >> stock;
+                cin.ignore();
+                Book newBook(title, author, isbn, year, stock);
+                newBook.addEntity();
+                cout << "Book added successfully!" << endl;
+                break;
+            }
+            case 2: {
+                string name, contact, password;
+                cout << "Enter Member Name: "; getline(cin, name);
+                cout << "Enter Contact: "; getline(cin, contact);
+                cout << "Enter Password: "; getline(cin, password);
+                Member newMember(name, contact, password);
+                newMember.addEntity();
+                cout << "Member added successfully! Library ID: " << newMember.id << endl;
+                break;
+            }
+            case 3:
+                searchBooks();
+                break;
+            case 4:
+                cout << "Logging out...\n";
+                return;
+            default:
+                cout << "Invalid choice! Try again." << endl;
         }
     }
 }
@@ -208,13 +325,17 @@ void signIn() {
                 int attempts = 0;
                 cout << "Enter Library ID Number: ";
                 cin >> memberID;
-
                 while (attempts < 3) {
                     cout << "Enter Password: ";
                     cin >> password;
-
+                    cin.ignore();
                     if (Member::authenticate(memberID, password)) {
                         cout << "Login successful!\n";
+                        // In a complete system, member details would be loaded from storage.
+                        // Here we create a temporary Member instance for simulation.
+                        Member currentMember("User", "", password);
+                        currentMember.id = memberID;
+                        memberActions(currentMember);
                         return;
                     } else {
                         attempts++;
@@ -225,12 +346,14 @@ void signIn() {
             } else {
                 cout << "Please sign up.\n";
                 string name, contact, newPassword;
-                cout << "Enter Name: "; cin.ignore(); getline(cin, name);
+                cout << "Enter Name: "; getline(cin, name);
                 cout << "Enter Contact: "; getline(cin, contact);
                 cout << "Enter New Password: "; getline(cin, newPassword);
                 Member newMember(name, contact, newPassword);
                 newMember.addEntity();
                 cout << "Sign-up successful! Your Library ID Number is: " << newMember.id << endl;
+                memberActions(newMember);
+                return;
             }
         } else if (choice == 2) {
             string librarianID, password;
@@ -238,7 +361,7 @@ void signIn() {
             cin >> librarianID;
             cout << "Enter Password: ";
             cin >> password;
-
+            cin.ignore();
             if (Librarian::authenticate(librarianID, password)) {
                 cout << "Librarian login successful!\n";
                 librarianActions();
