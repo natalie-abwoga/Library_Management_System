@@ -256,7 +256,45 @@ void memberActions(Member &member) {
     } while(choice != 6);
 }
 
-// Function for librarian actions
+void searchMember() {
+    ifstream file("members.csv");
+    if (!file) {
+        cout << "Error: Could not open file.\n";
+        return;
+    }
+
+    string searchQuery;
+    cout << "Enter Member Name or ID: ";
+    cin.ignore();  // Ignore any leftover newline characters
+    getline(cin, searchQuery);
+
+    string line;
+    bool found = false;
+
+    while (getline(file, line)) {
+        string name, id, contact, password;
+        double fineAmount;
+        stringstream ss(line);
+        getline(ss, name, ',');
+        getline(ss, id, ',');
+        getline(ss, contact, ',');
+        getline(ss, password, ',');
+        ss >> fineAmount;  // Read fine amount
+
+        if (name == searchQuery || id == searchQuery) {
+            cout << "Member Found!\n";
+            cout << "Name: " << name << "\nID: " << id << "\nContact: " << contact << "\nFine Due: " << fineAmount << endl;
+            found = true;
+            break;  // Stop searching after the first match
+        }
+    }
+
+    if (!found) {
+        cout << "No member found with that name or ID.\n";
+    }
+
+    file.close();
+}
 void librarianActions() {
     int choice;
     while (true) {
@@ -264,13 +302,14 @@ void librarianActions() {
              << "1. Add Book\n"
              << "2. Add Member\n"
              << "3. Search Books\n"
-             << "4. Logout\n"
+             << "4. Search for a member\n"
+             << "5. Logout\n"
              << "Enter your choice: ";
         cin >> choice;
         cin.ignore();
 
         switch (choice) {
-            case 1: {
+            case 1:{
                 string title, author, isbn;
                 int year, stock;
                 cout << "Enter Book Title: "; getline(cin, title);
@@ -283,8 +322,9 @@ void librarianActions() {
                 newBook.addEntity();
                 cout << "Book added successfully!" << endl;
                 break;
-            }
-            case 2: {
+               }
+
+            case 2:{
                 string name, contact, password;
                 cout << "Enter Member Name: "; getline(cin, name);
                 cout << "Enter Contact: "; getline(cin, contact);
@@ -293,11 +333,14 @@ void librarianActions() {
                 newMember.addEntity();
                 cout << "Member added successfully! Library ID: " << newMember.id << endl;
                 break;
-            }
+               }
             case 3:
-                searchBooks();
+                searchBooks();  
                 break;
             case 4:
+                searchMember(); 
+                break;
+            case 5:
                 cout << "Logging out...\n";
                 return;
             default:
