@@ -5,6 +5,7 @@
 #include <sstream>       // for string stream operations
 #include <stdexcept>     // for exception classes
 #include <algorithm>     // for std::find
+#include <iomanip>          //for put_time
 using namespace std;
 
 int generateMemberID() {
@@ -94,6 +95,30 @@ public:
         borrowedBooks.push_back(bookTitle);
         cout << "Book borrowed: " << bookTitle << endl;
     }
+ //function to get current time
+    string get_time() {
+        time_t now = time(0);// getting current time
+        tm* localTime = localtime(&now);//
+        char buffer[20];
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", localTime);//changing time format to human readable form
+        cout<<"You borrowed the book at : "<<buffer<<endl;
+        return string(buffer); //changing char array to string
+    }
+
+
+    //function to display when the member is supposed to return the book
+    void display_end_time(time_t start)
+    {
+        time_t end = start + ( 14 * 24* 60 * 60);// 14 days in seconds
+        
+        // convert end time to local tome structure
+        tm* endTime = localtime(&end);
+    
+        // display the end time
+    cout<<"You have to return the book on : "<<put_time(endTime, "%Y-%m-%d %H:%M")<<endl;
+    
+    }
+
 
     // Member returns a book; if returned late, a fine of 500 is applied.
     void returnBook(const string &bookTitle, bool returnedLate) {
@@ -223,6 +248,9 @@ void memberActions(Member &member) {
                 cout << "Enter book title to borrow: ";
                 getline(cin, bookTitle);
                 member.borrowBook(bookTitle);
+                time_t start_time = time(0);//getting current time
+                member.get_time();//display current time
+                member.display_end_time(start_time);//display end time
                 break;
             }
             case 3: {
