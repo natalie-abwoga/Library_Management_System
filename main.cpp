@@ -5,7 +5,8 @@
 #include <sstream>       // for string stream operations
 #include <stdexcept>     // for exception classes
 #include <algorithm>     // for std::find
-#include <iomanip>          //for put_time
+#include <iomanip>       // for put_time and formatting
+#include <ctime>         // for time-related functions
 using namespace std;
 
 int generateMemberID() {
@@ -95,38 +96,31 @@ public:
         borrowedBooks.push_back(bookTitle);
         cout << "Book borrowed: " << bookTitle << endl;
     }
- //function to get current time
+
+    // Function to get current time
     string get_time() {
-        time_t now = time(0);// getting current time
-        tm* localTime = localtime(&now);//converts the time_t value to a tm structure representing local time.
-        char buffer[20];//declare an array with 20 elements
-        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", localTime);//changing time format to human readable form
-        cout<<"You borrowed the book at : "<<buffer<<endl;
-        return string(buffer); //changing char array to string
+        time_t now = time(0); // Getting current time
+        tm* localTime = localtime(&now); // Converts the time_t value to a tm structure representing local time
+        char buffer[20]; // Declare an array with 20 elements
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", localTime); // Changing time format to human-readable form
+        cout << "You borrowed the book at: " << buffer << endl;
+        return string(buffer); // Changing char array to string
     }
 
-
-    //function to display when the member is supposed to return the book
-    void display_end_time(time_t start)
-    {
-        time_t end = start + ( 14 * 24* 60 * 60);// 14 days in seconds
-        
-        // convert end time to local time structure
-        tm* endTime = localtime(&end);
-    
-        // display the end time
-    cout<<"You have to return the book on : "<<put_time(endTime, "%Y-%m-%d %H:%M")<<endl;
-    
+    // Function to display when the member is supposed to return the book
+    void display_end_time(time_t start) {
+        time_t end = start + (14 * 24 * 60 * 60); // 14 days in seconds
+        tm* endTime = localtime(&end); // Convert end time to local time structure
+        cout << "You have to return the book on: " << put_time(endTime, "%Y-%m-%d %H:%M") << endl;
     }
 
-
-    // Member returns a book; if returned late, a fine of 500 is applied.
+    // Member returns a book; if returned late, a fine of 500 is applied
     void returnBook(const string &bookTitle, bool returnedLate) {
         auto it = find(borrowedBooks.begin(), borrowedBooks.end(), bookTitle);
-        if(it != borrowedBooks.end()){
+        if (it != borrowedBooks.end()) {
             borrowedBooks.erase(it);
             cout << "Book returned: " << bookTitle << endl;
-            if(returnedLate){
+            if (returnedLate) {
                 fineAmount += 500;
                 cout << "Book returned late. A fine of 500 has been added." << endl;
             }
@@ -135,10 +129,10 @@ public:
         }
     }
 
-    // Member reports a lost book; a fine of 500 is applied.
+    // Member reports a lost book; a fine of 500 is applied
     void reportLostBook(const string &bookTitle) {
         auto it = find(borrowedBooks.begin(), borrowedBooks.end(), bookTitle);
-        if(it != borrowedBooks.end()){
+        if (it != borrowedBooks.end()) {
             borrowedBooks.erase(it);
             fineAmount += 500;
             cout << "Book reported as lost. A fine of 500 has been added." << endl;
@@ -147,13 +141,13 @@ public:
         }
     }
 
-    // Member can pay the accumulated fine.
+    // Member can pay the accumulated fine
     void payFine() {
         cout << "Your current fine is: " << fineAmount << "\n";
         double amount;
         cout << "Enter amount to pay: ";
         cin >> amount;
-        if(amount >= fineAmount) {
+        if (amount >= fineAmount) {
             cout << "Fine cleared!" << endl;
             fineAmount = 0;
         } else {
@@ -195,14 +189,14 @@ public:
 void searchBooks() {
     string searchForBooks;
     cout << "Enter title or author to search for: ";
-    cin.ignore();  // Clear input buffer
+    cin.ignore(); // Clear input buffer
     getline(cin, searchForBooks);
 
     ifstream file("books.csv");
     string line, title, author, isbn, year, stock;
     bool found = false;
 
-    while(getline(file, line)) {
+    while (getline(file, line)) {
         stringstream ss(line);
         getline(ss, title, ',');
         getline(ss, author, ',');
@@ -210,7 +204,7 @@ void searchBooks() {
         getline(ss, year, ',');
         getline(ss, stock, ',');
 
-        if(title.find(searchForBooks) != string::npos || author.find(searchForBooks) != string::npos) {
+        if (title.find(searchForBooks) != string::npos || author.find(searchForBooks) != string::npos) {
             cout << "Found: " << title << " by " << author
                  << " | ISBN: " << isbn << " | Year: " << year
                  << " | Stock: " << stock << endl;
@@ -219,12 +213,41 @@ void searchBooks() {
     }
     file.close();
 
-    if(!found) {
+    if (!found) {
         cout << "No books found matching the search criteria." << endl;
     }
 }
 
-// Member action menu for borrowing, returning, lost-book reporting, and paying fines.
+// Function to view all books
+void viewAllBooks() {
+    ifstream file("books.csv");
+    if (!file) {
+        cout << "Error: Could not open file.\n";
+        return;
+    }
+
+    string line, title, author, isbn, year, stock;
+    cout << "\nAll Books in the Library:\n";
+    cout << "----------------------------------------------------------------------------\n";
+    cout << setw(30) << left << "Title" << setw(20) << "Author" << setw(15) << "ISBN" << setw(10) << "Year" << setw(10) << "Stock" << endl;
+    cout << "----------------------------------------------------------------------------\n";
+
+    while (getline(file, line)) {
+        stringstream ss(line);
+        getline(ss, title, ',');
+        getline(ss, author, ',');
+        getline(ss, isbn, ',');
+        getline(ss, year, ',');
+        getline(ss, stock, ',');
+
+        cout << setw(30) << left << title << setw(20) << author << setw(15) << isbn << setw(10) << year << setw(10) << stock << endl;
+    }
+
+    file.close();
+    cout << "----------------------------------------------------------------------------\n";
+}
+
+// Member action menu for borrowing, returning, lost-book reporting, paying fines, and viewing all books
 void memberActions(Member &member) {
     int choice;
     do {
@@ -234,12 +257,13 @@ void memberActions(Member &member) {
              << "3. Return Book\n"
              << "4. Report Lost Book\n"
              << "5. Pay Fine\n"
-             << "6. Logout\n"
+             << "6. View All Books\n"
+             << "7. Logout\n"
              << "Enter your choice: ";
         cin >> choice;
         cin.ignore();
 
-        switch(choice) {
+        switch (choice) {
             case 1:
                 searchBooks();
                 break;
@@ -248,9 +272,9 @@ void memberActions(Member &member) {
                 cout << "Enter book title to borrow: ";
                 getline(cin, bookTitle);
                 member.borrowBook(bookTitle);
-                time_t start_time = time(0);//getting current time
-                member.get_time();//display current time
-                member.display_end_time(start_time);//display end time
+                time_t start_time = time(0); // Getting current time
+                member.get_time(); // Display current time
+                member.display_end_time(start_time); // Display end time
                 break;
             }
             case 3: {
@@ -276,12 +300,15 @@ void memberActions(Member &member) {
                 member.payFine();
                 break;
             case 6:
+                viewAllBooks(); // View all books
+                break;
+            case 7:
                 cout << "Logging out...\n";
                 break;
             default:
                 cout << "Invalid choice! Try again." << endl;
         }
-    } while(choice != 6);
+    } while (choice != 7);
 }
 
 void searchMember() {
@@ -293,7 +320,7 @@ void searchMember() {
 
     string searchQuery;
     cout << "Enter Member Name or ID: ";
-    cin.ignore();  // Ignore any leftover newline characters
+    cin.ignore(); // Ignore any leftover newline characters
     getline(cin, searchQuery);
 
     string line;
@@ -307,13 +334,13 @@ void searchMember() {
         getline(ss, id, ',');
         getline(ss, contact, ',');
         getline(ss, password, ',');
-        ss >> fineAmount;  // Read fine amount
+        ss >> fineAmount; // Read fine amount
 
         if (name == searchQuery || id == searchQuery) {
             cout << "Member Found!\n";
             cout << "Name: " << name << "\nID: " << id << "\nContact: " << contact << "\nFine Due: " << fineAmount << endl;
             found = true;
-            break;  // Stop searching after the first match
+            break; // Stop searching after the first match
         }
     }
 
@@ -323,6 +350,7 @@ void searchMember() {
 
     file.close();
 }
+
 void librarianActions() {
     int choice;
     while (true) {
@@ -337,7 +365,7 @@ void librarianActions() {
         cin.ignore();
 
         switch (choice) {
-            case 1:{
+            case 1: {
                 string title, author, isbn;
                 int year, stock;
                 cout << "Enter Book Title: "; getline(cin, title);
@@ -350,9 +378,8 @@ void librarianActions() {
                 newBook.addEntity();
                 cout << "Book added successfully!" << endl;
                 break;
-               }
-
-            case 2:{
+            }
+            case 2: {
                 string name, contact, password;
                 cout << "Enter Member Name: "; getline(cin, name);
                 cout << "Enter Contact: "; getline(cin, contact);
@@ -361,12 +388,12 @@ void librarianActions() {
                 newMember.addEntity();
                 cout << "Member added successfully! Library ID: " << newMember.id << endl;
                 break;
-               }
+            }
             case 3:
-                searchBooks();  
+                searchBooks();
                 break;
             case 4:
-                searchMember(); 
+                searchMember();
                 break;
             case 5:
                 cout << "Logging out...\n";
