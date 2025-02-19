@@ -98,8 +98,8 @@ public:
  //function to get current time
     string get_time() {
         time_t now = time(0);// getting current time
-        tm* localTime = localtime(&now);//
-        char buffer[20];
+        tm* localTime = localtime(&now);//converts the time_t value to a tm structure representing local time.
+        char buffer[20];//declare an array with 20 elements
         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", localTime);//changing time format to human readable form
         cout<<"You borrowed the book at : "<<buffer<<endl;
         return string(buffer); //changing char array to string
@@ -111,7 +111,7 @@ public:
     {
         time_t end = start + ( 14 * 24* 60 * 60);// 14 days in seconds
         
-        // convert end time to local tome structure
+        // convert end time to local time structure
         tm* endTime = localtime(&end);
     
         // display the end time
