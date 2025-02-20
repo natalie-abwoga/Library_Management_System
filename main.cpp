@@ -1,12 +1,12 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <stdexcept>
-#include <algorithm>
-#include <iomanip>
-#include <ctime>
+#include <iostream>// Provides input and output stream functionality (e.g., cin, cout)
+#include <fstream>//Allows file input and output operations using file streams
+#include <vector>//storage library
+#include <string>//Provides the  class for handling strings
+#include <sstream>//Supports string stream operations for parsing and formatting strings
+#include <stdexcept>//Contains standard exception classes 
+#include <algorithm>// Offers a collection of algorithm
+#include <iomanip>//Provides facilities to format input/output 
+#include <ctime>// Contains functions and types for manipulating date and time.
 using namespace std;
 
 int generateMemberID() {
@@ -113,23 +113,29 @@ public:
         cout << "You have to return the book on: " << put_time(endTime, "%Y-%m-%d %H:%M") << endl;
     }
 
-    // Member returns a book; if returned late, a fine of 500 is applied
+    // Function to return a book. If the book is returned late, a fine of 500 is added.
     void returnBook(const string &bookTitle, bool returnedLate) {
+           // Search for the book title in the borrowedBooks vector
         auto it = find(borrowedBooks.begin(), borrowedBooks.end(), bookTitle);
+            // Check if the book was found among the borrowed books
         if (it != borrowedBooks.end()) {
+             // Remove the book from the list as it is being returned
             borrowedBooks.erase(it);
             cout << "Book returned: " << bookTitle << endl;
+                 // If the book was returned after the due date, apply a fine
             if (returnedLate) {
-                fineAmount += 500;
+                fineAmount += 500; // Add a fine of 500 to the current fine amount
                 cout << "Book returned late. A fine of 500 has been added." << endl;
             }
         } else {
+            // If the book isn't found in the borrowed list, inform the user
             cout << "You haven't borrowed the book: " << bookTitle << endl;
         }
     }
 
     // Member reports a lost book; a fine of 500 is applied
     void reportLostBook(const string &bookTitle) {
+            // Search for the book title in the borrowedBooks vector
         auto it = find(borrowedBooks.begin(), borrowedBooks.end(), bookTitle);
         if (it != borrowedBooks.end()) {
             borrowedBooks.erase(it);
@@ -140,7 +146,7 @@ public:
         }
     }
 
-    // Member can pay the accumulated fine
+    // Function that allows the member to pay off their accumulated fine
     void payFine() {
         cout << "Your current fine is: " << fineAmount << "\n";
         double amount;
