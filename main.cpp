@@ -1,12 +1,12 @@
-#include <iostream>      // used for input and output (I/O) operations
-#include <fstream>       // provides file stream classes for reading/writing files
-#include <vector>        // for using the vector container
-#include <string>        // for using the string class
-#include <sstream>       // for string stream operations
-#include <stdexcept>     // for exception classes
-#include <algorithm>     // for std::find
-#include <iomanip>       // for put_time and formatting
-#include <ctime>         // for time-related functions
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <stdexcept>
+#include <algorithm>
+#include <iomanip>
+#include <ctime>
 using namespace std;
 
 int generateMemberID() {
@@ -75,7 +75,6 @@ public:
     static bool authenticate(string memberID, string password) {
         ifstream file("members.csv");
         string line, n, i, c, p;
-        // Note: This simple authentication ignores the fine field
         while (getline(file, line)) {
             stringstream ss(line);
             getline(ss, n, ',');
@@ -91,7 +90,7 @@ public:
         return false;
     }
 
-    // Member borrows a book (simulated by adding to an in-memory vector)
+    // Member borrows a book (in-memory record update)
     void borrowBook(const string &bookTitle) {
         borrowedBooks.push_back(bookTitle);
         cout << "Book borrowed: " << bookTitle << endl;
@@ -99,18 +98,18 @@ public:
 
     // Function to get current time
     string get_time() {
-        time_t now = time(0); // Getting current time
-        tm* localTime = localtime(&now); // Converts the time_t value to a tm structure representing local time
-        char buffer[20]; // Declare an array with 20 elements
-        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", localTime); // Changing time format to human-readable form
+        time_t now = time(0);
+        tm* localTime = localtime(&now);
+        char buffer[20];
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", localTime);
         cout << "You borrowed the book at: " << buffer << endl;
-        return string(buffer); // Changing char array to string
+        return string(buffer);
     }
 
-    // Function to display when the member is supposed to return the book
+    // Function to display return deadline (14 days later)
     void display_end_time(time_t start) {
-        time_t end = start + (14 * 24 * 60 * 60); // 14 days in seconds
-        tm* endTime = localtime(&end); // Convert end time to local time structure
+        time_t end = start + (14 * 24 * 60 * 60);
+        tm* endTime = localtime(&end);
         cout << "You have to return the book on: " << put_time(endTime, "%Y-%m-%d %H:%M") << endl;
     }
 
@@ -189,7 +188,7 @@ public:
 void searchBooks() {
     string searchForBooks;
     cout << "Enter title or author to search for: ";
-    cin.ignore(); // Clear input buffer
+    cin.ignore();
     getline(cin, searchForBooks);
 
     ifstream file("books.csv");
@@ -229,7 +228,8 @@ void viewAllBooks() {
     string line, title, author, isbn, year, stock;
     cout << "\nAll Books in the Library:\n";
     cout << "----------------------------------------------------------------------------\n";
-    cout << setw(30) << left << "Title" << setw(20) << "Author" << setw(15) << "ISBN" << setw(10) << "Year" << setw(10) << "Stock" << endl;
+    cout << setw(30) << left << "Title" << setw(20) << "Author" << setw(15) << "ISBN" 
+         << setw(10) << "Year" << setw(10) << "Stock" << endl;
     cout << "----------------------------------------------------------------------------\n";
 
     while (getline(file, line)) {
@@ -240,14 +240,69 @@ void viewAllBooks() {
         getline(ss, year, ',');
         getline(ss, stock, ',');
 
-        cout << setw(30) << left << title << setw(20) << author << setw(15) << isbn << setw(10) << year << setw(10) << stock << endl;
+        cout << setw(30) << left << title << setw(20) << author << setw(15) << isbn 
+             << setw(10) << year << setw(10) << stock << endl;
     }
 
     file.close();
     cout << "----------------------------------------------------------------------------\n";
 }
 
-// Member action menu for borrowing, returning, lost-book reporting, paying fines, and viewing all books
+// Function to update the book stock record when a book is borrowed
+bool updateBookStock(const string &bookTitle) {
+    ifstream infile("books.csv");
+    if (!infile) {
+        cout << "Error: Could not open books.csv for reading." << endl;
+        return false;
+    }
+    vector<string> lines;
+    bool found = false;
+    string line;
+    while (getline(infile, line)) {
+        stringstream ss(line);
+        string title, author, isbn, year, stock;
+        getline(ss, title, ',');
+        getline(ss, author, ',');
+        getline(ss, isbn, ',');
+        getline(ss, year, ',');
+        getline(ss, stock, ',');
+        
+        if (title == bookTitle) {
+            found = true;
+            int currentStock = stoi(stock);
+            if (currentStock > 0) {
+                currentStock--;  // Decrement the stock
+                ostringstream oss;
+                oss << title << "," << author << "," << isbn << "," << year << "," << currentStock;
+                lines.push_back(oss.str());
+            } else {
+                cout << "No stock available for book: " << bookTitle << endl;
+                lines.push_back(line); // Keep the original record
+            }
+        } else {
+            lines.push_back(line);
+        }
+    }
+    infile.close();
+
+    if (!found) {
+        cout << "Book not found: " << bookTitle << endl;
+        return false;
+    }
+
+    ofstream outfile("books.csv");
+    if (!outfile) {
+        cout << "Error: Could not open books.csv for writing." << endl;
+        return false;
+    }
+    for (const auto &updatedLine : lines) {
+        outfile << updatedLine << "\n";
+    }
+    outfile.close();
+    return true;
+}
+
+// Member action menu including borrowing, returning, and fine management
 void memberActions(Member &member) {
     int choice;
     do {
@@ -271,10 +326,13 @@ void memberActions(Member &member) {
                 string bookTitle;
                 cout << "Enter book title to borrow: ";
                 getline(cin, bookTitle);
-                member.borrowBook(bookTitle);
-                time_t start_time = time(0); // Getting current time
-                member.get_time(); // Display current time
-                member.display_end_time(start_time); // Display end time
+                // Update the book record by reducing the stock before borrowing
+                if (updateBookStock(bookTitle)) {
+                    member.borrowBook(bookTitle);
+                    time_t start_time = time(0);
+                    member.get_time();
+                    member.display_end_time(start_time);
+                }
                 break;
             }
             case 3: {
@@ -300,7 +358,7 @@ void memberActions(Member &member) {
                 member.payFine();
                 break;
             case 6:
-                viewAllBooks(); // View all books
+                viewAllBooks();
                 break;
             case 7:
                 cout << "Logging out...\n";
@@ -320,7 +378,7 @@ void searchMember() {
 
     string searchQuery;
     cout << "Enter Member Name or ID: ";
-    cin.ignore(); // Ignore any leftover newline characters
+    cin.ignore();
     getline(cin, searchQuery);
 
     string line;
@@ -334,13 +392,14 @@ void searchMember() {
         getline(ss, id, ',');
         getline(ss, contact, ',');
         getline(ss, password, ',');
-        ss >> fineAmount; // Read fine amount
+        ss >> fineAmount;
 
         if (name == searchQuery || id == searchQuery) {
             cout << "Member Found!\n";
-            cout << "Name: " << name << "\nID: " << id << "\nContact: " << contact << "\nFine Due: " << fineAmount << endl;
+            cout << "Name: " << name << "\nID: " << id << "\nContact: " << contact 
+                 << "\nFine Due: " << fineAmount << endl;
             found = true;
-            break; // Stop searching after the first match
+            break;
         }
     }
 
@@ -404,7 +463,6 @@ void librarianActions() {
     }
 }
 
-// Sign In Function
 void signIn() {
     while (true) {
         int choice;
@@ -429,8 +487,6 @@ void signIn() {
                     cin.ignore();
                     if (Member::authenticate(memberID, password)) {
                         cout << "Login successful!\n";
-                        // In a complete system, member details would be loaded from storage.
-                        // Here we create a temporary Member instance for simulation.
                         Member currentMember("User", "", password);
                         currentMember.id = memberID;
                         memberActions(currentMember);
