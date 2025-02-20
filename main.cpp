@@ -26,16 +26,16 @@ class Book : public LibraryEntity {
 public:
     string title, author, isbn;
     int year, stock;
-
+// This constructor initializes a Book object using an initializer list
     Book(string t, string a, string i, int y, int s)
         : title(t), author(a), isbn(i), year(y), stock(s) {}
-
+//// Overrides the addEntity() method to add a book record to a CSV file
     void addEntity() override {
         ofstream file("books.csv", ios::app);
         file << title << "," << author << "," << isbn << "," << year << "," << stock << "\n";
         file.close();
     }
-
+//// Overrides the displayDetails() method to print the book's information
     void displayDetails() override {
         cout << "Title: " << title << " | Author: " << author
              << " | ISBN: " << isbn << " | Year: " << year
@@ -47,6 +47,7 @@ public:
 class Person {
 public:
     string name, id, contact;
+//constructor
     Person(string n, string i, string c) : name(n), id(i), contact(c) {}
 };
 
@@ -71,16 +72,22 @@ public:
         cout << "Member: " << name << " | ID: " << id
              << " | Contact: " << contact << " | Fine Due: " << fineAmount << endl;
     }
-
+//// Static function to authenticate a member using their member ID and password
     static bool authenticate(string memberID, string password) {
+        //    // Open the "members.csv" file for reading. This file contains all member records
         ifstream file("members.csv");
+        // Declare variables to store a complete line and individual fields from the CSV.
         string line, n, i, c, p;
+        // Loop through each line in the file.
         while (getline(file, line)) {
+                    // Create a stringstream object to parse the current line.
             stringstream ss(line);
+               // Extract fields separated by commas:
             getline(ss, n, ',');
             getline(ss, i, ',');
             getline(ss, c, ',');
             getline(ss, p, ',');
+            //        // Check if the current record matches the provided memberID and password.
             if (i == memberID && p == password) {
                 file.close();
                 return true;
